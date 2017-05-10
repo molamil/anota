@@ -27,8 +27,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Arrow translation
     const apt = {
-        x: 0,
-        y: 100,
+        x: 200,
+        y: 200,
     }
 
     arrow.polygon(`
@@ -40,6 +40,13 @@ document.addEventListener('DOMContentLoaded', () => {
         ${apt.x + ap.l},${apt.y + ap.t} 
         ${apt.x},${apt.y + ap.t}
     `).fill('#9841B5')
+
+    arrow.center(0, 0)
+    let i = 0
+    setInterval(() => {
+        arrow.rotate(i, 200, 200)
+        i += 0.25
+    }, 10)
 })
 
 // export default { anota }
