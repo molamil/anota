@@ -1,4 +1,25 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // Arrow structure
+    const ap = {
+        l: 200, // Shaft length
+        t: 15,  // Shaft thickness
+        tl: 8,  // Head back tip in x
+        tt: 20, // Head back tip in y
+        tp: 50, // Head length
+    }
+
+    // Arrow translation
+    const apt = {
+        x: 200,
+        y: 200,
+    }
+
+    function updateArrow(arrow, x, y) {
+        const a = (Math.atan2(x - apt.x, -(y - apt.y)) * (180 / Math.PI)) - 90
+        console.log(x, y, a)
+        arrow.rotate(a, apt.x, apt.y + (ap.t / 2))
+    }
+
     let n = 1
 
     const wrapper = document.createElement('div')
@@ -16,21 +37,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const arrow = draw.group()
 
-    // Arrow structure
-    const ap = {
-        l: 200, // Shaft length
-        t: 15,  // Shaft thickness
-        tl: 8,  // Head back tip in x
-        tt: 20, // Head back tip in y
-        tp: 50, // Head length
-    }
-
-    // Arrow translation
-    const apt = {
-        x: 200,
-        y: 200,
-    }
-
     arrow.polygon(`
         ${apt.x},${apt.y} 
         ${apt.x + ap.l},${apt.y} 
@@ -41,12 +47,9 @@ document.addEventListener('DOMContentLoaded', () => {
         ${apt.x},${apt.y + ap.t}
     `).fill('#9841B5')
 
-    arrow.center(0, 0)
-    let i = 0
-    setInterval(() => {
-        arrow.rotate(i, 200, 200)
-        i += 0.25
-    }, 10)
+    wrapper.addEventListener('mousemove', (event) => {
+        updateArrow(arrow, event.clientX, event.clientY)
+    })
 })
 
 // export default { anota }
