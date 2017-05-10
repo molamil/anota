@@ -1,7 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
     // Arrow structure
     const ap = {
-        l: 200, // Shaft length
         t: 15,  // Shaft thickness
         tl: 8,  // Head back tip in x
         tt: 20, // Head back tip in y
@@ -14,9 +13,19 @@ document.addEventListener('DOMContentLoaded', () => {
         y: 200,
     }
 
-    function updateArrow(arrow, x, y) {
+    function drawArrow(arrow, x, y) {
         const a = (Math.atan2(x - apt.x, -(y - apt.y)) * (180 / Math.PI)) - 90
-        console.log(x, y, a)
+        const al = Math.hypot(x - apt.x, y - apt.y)
+        console.log(x, y, a, al)
+        arrow.plot([
+            [apt.x, apt.y],
+            [apt.x + al, apt.y],
+            [apt.x + al + (-ap.tl), apt.y - ap.tt],
+            [apt.x + al + ap.tp, apt.y + (ap.t / 2)],
+            [apt.x + al + (-ap.tl), apt.y + ap.t + ap.tt],
+            [apt.x + al, apt.y + ap.t],
+            [apt.x, apt.y + ap.t],
+        ])
         arrow.rotate(a, apt.x, apt.y + (ap.t / 2))
     }
 
@@ -34,21 +43,10 @@ document.addEventListener('DOMContentLoaded', () => {
     document.body.appendChild(wrapper)
 
     const draw = SVG(wrapper.id)
-
-    const arrow = draw.group()
-
-    arrow.polygon(`
-        ${apt.x},${apt.y} 
-        ${apt.x + ap.l},${apt.y} 
-        ${apt.x + ap.l + (-ap.tl)},${apt.y - ap.tt} 
-        ${apt.x + ap.l + ap.tp},${apt.y + (ap.t / 2)} 
-        ${apt.x + ap.l + (-ap.tl)},${apt.y + ap.t + ap.tt} 
-        ${apt.x + ap.l},${apt.y + ap.t} 
-        ${apt.x},${apt.y + ap.t}
-    `).fill('#9841B5')
+    const arrow = draw.polygon().fill('#9841B5')
 
     wrapper.addEventListener('mousemove', (event) => {
-        updateArrow(arrow, event.clientX, event.clientY)
+        drawArrow(arrow, event.clientX, event.clientY)
     })
 })
 
