@@ -1,0 +1,18 @@
+{
+    "root": true,
+    "extends": "airbnb-base",
+    "rules": {
+        "semi": ["error", "never"],
+        "indent": ["error", 4],
+        "linebreak-style": ["error", "unix"],
+        "object-shorthand": ["warn", "always"],
+        "func-names": ["error", "as-needed"],
+        "import/extensions": ["error", "always", {
+            "js": "never",
+            "vue": "never"
+        }],
+        "no-param-reassign": [1, { "props": false }],
+        "import/no-extraneous-dependencies": ["error", { "devDependencies": true }]
+    },
+    "defaultSeverity": "warning"
+}
