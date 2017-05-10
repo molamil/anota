@@ -5,16 +5,20 @@
     "lint": "eslint src",
     "static": "babel static --out-dir dist --copy-files",
     "compile": "babel src/main.js --out-file dist/anota.js --source-maps",
-    "build": "npm run lint && npm run static && npm run compile",
-    "dev": "npm run build && browser-sync start --server 'dist' --files 'dist'"
+    "build": "npm run lint && npm run compile && npm run static",
+    "serve": "browser-sync start --server 'dist'",
+    "watch": "watch 'npm run build && browser-sync reload' src static",
+    "dev": "concurrently 'npm run watch' 'npm run serve'"
   },
   "dependencies": {},
   "devDependencies": {
     "babel-cli": "^6.24.1",
     "babel-preset-env": "^1.4.0",
     "browser-sync": "^2.18.8",
+    "concurrently": "^3.4.0",
     "eslint": "^3.19.0",
     "eslint-config-airbnb-base": "^11.1.3",
-    "eslint-plugin-import": "^2.2.0"
+    "eslint-plugin-import": "^2.2.0",
+    "watch": "^1.0.2"
   }
 }
