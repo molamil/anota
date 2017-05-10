@@ -1,6 +1,4 @@
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('DOM fully loaded and parsed')
-
     let n = 1
 
     const wrapper = document.createElement('div')
@@ -15,7 +13,33 @@ document.addEventListener('DOMContentLoaded', () => {
     document.body.appendChild(wrapper)
 
     const draw = SVG(wrapper.id)
-    draw.rect(100, 100)
+
+    const arrow = draw.group()
+
+    // Arrow structure
+    const ap = {
+        l: 200, // Shaft length
+        t: 15,  // Shaft thickness
+        tl: 8,  // Head back tip in x
+        tt: 20, // Head back tip in y
+        tp: 50, // Head length
+    }
+
+    // Arrow translation
+    const apt = {
+        x: 0,
+        y: 100,
+    }
+
+    arrow.polygon(`
+        ${apt.x},${apt.y} 
+        ${apt.x + ap.l},${apt.y} 
+        ${apt.x + ap.l + (-ap.tl)},${apt.y - ap.tt} 
+        ${apt.x + ap.l + ap.tp},${apt.y + (ap.t / 2)} 
+        ${apt.x + ap.l + (-ap.tl)},${apt.y + ap.t + ap.tt} 
+        ${apt.x + ap.l},${apt.y + ap.t} 
+        ${apt.x},${apt.y + ap.t}
+    `).fill('#9841B5')
 })
 
 // export default { anota }
