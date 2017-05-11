@@ -1,11 +1,42 @@
-const conf = {
-    color: '#9841B5',
+// -- TEXT CLASS
+
+class Text {
+    constructor(svg, x = 0, y = 0, color) {
+        console.log('Text', this)
+
+        // Instance properties
+        this.svg = svg
+        this.wrapper = svg.parent()
+        this.x = x
+        this.y = y
+        this.color = color
+        this.textInput = null
+        this.textShape = null
+    }
+
+    start() {
+        this.textShape = this.svg.text('Lorem ipsum dolor sit amet.\nCras sodales auctor.')
+
+        this.textInput = document.createElement('input')
+        this.textInput.setAttribute('autofocus', 'autofocus')
+        document.body.appendChild(this.textInput)
+
+        this.textInput.addEventListener('input', (event) => {
+            console.log('input', event)
+            this.textShape.text(event.target.value)
+        })
+    }
+
+    stop() {
+        console.log('Text.stop', this)
+    }
 }
+
 
 // -- ARROW CLASS
 
 class Arrow {
-    constructor(svg, x = 0, y = 0) {
+    constructor(svg, x = 0, y = 0, color) {
         const that = this
 
         // Instance properties
@@ -15,7 +46,7 @@ class Arrow {
         this.y1 = y
         this.x2 = 0
         this.y2 = 0
-        this.enabled = false
+        this.color = color
         this.shape = null
 
         // Binders so "this" to work in listeners
@@ -25,7 +56,7 @@ class Arrow {
     }
 
     start() {
-        this.shape = this.svg.polygon().fill(conf.color)
+        this.shape = this.svg.polygon().fill(this.color)
         this.wrapper.addEventListener('mousemove', this._onMove)
     }
 
@@ -91,6 +122,7 @@ class Anota {
         this.svg = SVG(id)
         this.currentTool = null
         this.arrows = []
+        this.texts = []
 
         // Binders so "this" to work in listeners
         this._onDown = (event) => {
@@ -110,17 +142,33 @@ class Anota {
     }
 
     selectArrow() {
+        // TODO: deselect the previous tool
         this.currentTool = Anota.tools.ARROW
     }
 
     startArrow(x = 0, y = 0) {
-        const arrow = new Arrow(this.svg, x, y)
+        const arrow = new Arrow(this.svg, x, y, Anota.color)
         arrow.start()
         this.arrows.push(arrow)
     }
 
     stopArrow() {
         this.arrows[this.arrows.length - 1].stop()
+    }
+
+    selectText() {
+        // TODO: deselect the previous tool
+        this.currentTool = Anota.tools.TEXT
+    }
+
+    startText(x = 0, y = 0) {
+        const text = new Text(this.svg, x, y, Anota.color)
+        text.start()
+        this.texts.push(text)
+    }
+
+    stopText() {
+        this.texts[this.texts.length - 1].stop()
     }
 
     _init() {
@@ -131,6 +179,8 @@ class Anota {
     _downListener(event) {
         if (this.currentTool === Anota.tools.ARROW) {
             this.startArrow(event.clientX, event.clientY)
+        } else if (this.currentTool === Anota.tools.TEXT) {
+            this.startText(event.clientX, event.clientY)
         }
     }
 
@@ -142,8 +192,10 @@ class Anota {
 }
 
 Anota.n = 1
+Anota.color = '#9841B5'
 Anota.tools = {
     ARROW: 'arrow',
+    TEXT: 'text',
 }
 
 
