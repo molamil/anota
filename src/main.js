@@ -6,9 +6,9 @@ const conf = {
 
 class Arrow {
     constructor(svg, x = 0, y = 0) {
-        console.log('Arrow')
         const that = this
 
+        // Instance properties
         this.svg = svg
         this.wrapper = svg.parent()
         this.x1 = x
@@ -22,33 +22,14 @@ class Arrow {
         this._onMove = (event) => {
             that._moveListener.call(that, event)
         }
-        this._onDown = (event) => {
-            that._downListener.call(that, event)
-        }
-        this._onUp = (event) => {
-            that._upListener.call(that, event)
-        }
     }
 
-    enable() {
-        this.enabled = true
-        this.wrapper.addEventListener('mousedown', this._onDown)
-        this.wrapper.addEventListener('mouseup', this._onUp)
-    }
-
-    disable() {
-        this.enabled = false
-        this.stopDraw()
-        this.wrapper.removeEventListener('mousedown', this._onDown)
-        this.wrapper.removeEventListener('mouseup', this._onUp)
-    }
-
-    startDraw() {
+    start() {
         this.shape = this.svg.polygon().fill(conf.color)
         this.wrapper.addEventListener('mousemove', this._onMove)
     }
 
-    stopDraw() {
+    stop() {
         this.wrapper.removeEventListener('mousemove', this._onMove)
     }
 
@@ -72,16 +53,6 @@ class Arrow {
         this.shape.rotate(a, x1, y1 + (Arrow.t / 2))
     }
 
-    _downListener(event) {
-        this.x1 = event.clientX
-        this.y1 = event.clientY
-        this.startDraw()
-    }
-
-    _upListener() {
-        this.stopDraw()
-    }
-
     _moveListener(event) {
         this.x2 = event.clientX
         this.y2 = event.clientY
@@ -100,7 +71,7 @@ Arrow.tp = 50 // Head length
 
 class Anota {
     constructor(id = `_anota${Anota.n}`) {
-        console.log('Anota')
+        const that = this
 
         const wrapper = document.createElement('div')
         wrapper.id = id
@@ -115,24 +86,65 @@ class Anota {
         document.body.appendChild(wrapper)
         Anota.n += 1
 
+        // Instance properties
         this.wrapper = wrapper
         this.svg = SVG(id)
         this.currentTool = null
         this.arrows = []
+
+        // Binders so "this" to work in listeners
+        this._onDown = (event) => {
+            that._downListener.call(that, event)
+        }
+        this._onUp = (event) => {
+            that._upListener.call(that, event)
+        }
+
+        this._init()
+    }
+
+    destroy() {
+        this.wrapper.removeEventListener('mousedown', this._onDown)
+        this.wrapper.removeEventListener('mouseup', this._onUp)
+        // TODO: Destroy shapes, etc
     }
 
     selectArrow() {
-        console.log(this)
+        this.currentTool = Anota.tools.ARROW
     }
 
-    drawArrow() {
-        const arrow = new Arrow(this.svg)
-        arrow.enable()
+    startArrow(x = 0, y = 0) {
+        const arrow = new Arrow(this.svg, x, y)
+        arrow.start()
         this.arrows.push(arrow)
+    }
+
+    stopArrow() {
+        this.arrows[this.arrows.length - 1].stop()
+    }
+
+    _init() {
+        this.wrapper.addEventListener('mousedown', this._onDown)
+        this.wrapper.addEventListener('mouseup', this._onUp)
+    }
+
+    _downListener(event) {
+        if (this.currentTool === Anota.tools.ARROW) {
+            this.startArrow(event.clientX, event.clientY)
+        }
+    }
+
+    _upListener() {
+        if (this.currentTool === Anota.tools.ARROW) {
+            this.stopArrow()
+        }
     }
 }
 
 Anota.n = 1
+Anota.tools = {
+    ARROW: 'arrow',
+}
 
 
 // TODO: Try to achieve this directly on the UMD wrapper, right now it outputs on window.main.Anota
