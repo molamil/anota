@@ -16,7 +16,8 @@
         "func-names": ["error", "as-needed"],
         "no-param-reassign": [1, { "props": false }],
         "import/no-extraneous-dependencies": ["error", { "devDependencies": true }],
-        "import/prefer-default-export": "off"
+        "import/prefer-default-export": "off",
+        "no-underscore-dangle": "off"
     },
     "defaultSeverity": "warning"
 }

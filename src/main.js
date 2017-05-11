@@ -1,58 +1,129 @@
-const Anota = () => {
-    console.log('Anota', Anota, window.Anota)
+const conf = {
+    color: '#9841B5',
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-    // Arrow structure
-    const ap = {
-        t: 15,  // Shaft thickness
-        tl: 8,  // Head back tip in x
-        tt: 20, // Head back tip in y
-        tp: 50, // Head length
+// -- ARROW CLASS
+
+// Arrow structure
+const arrowConf = {
+    t: 15,  // Shaft thickness
+    tl: 8,  // Head back tip in x
+    tt: 20, // Head back tip in y
+    tp: 50, // Head length
+}
+
+class Arrow {
+    constructor(svg, x = 0, y = 0) {
+        console.log('Arrow')
+        const that = this
+
+        this.svg = svg
+        this.wrapper = svg.parent()
+        this.x1 = x
+        this.y1 = y
+        this.x2 = 0
+        this.y2 = 0
+        this.enabled = false
+        this.shape = null
+
+        // Binders for "this" to work in listeners
+        this._onMove = (event) => {
+            that._moveListener.call(that, event)
+        }
     }
 
-    // Arrow translation
-    const apt = {
-        x: 200,
-        y: 200,
+    enable() {
+        this.enabled = true
+        this.wrapper.addEventListener('mousedown', this._downListener)
+        this.wrapper.addEventListener('mouseup', this._upListener)
     }
 
-    function drawArrow(arrow, x, y) {
-        const a = (Math.atan2(x - apt.x, -(y - apt.y)) * (180 / Math.PI)) - 90
-        const al = Math.hypot(x - apt.x, y - apt.y)
-        // console.log(x, y, a, al)
-        arrow.plot([
-            [apt.x, apt.y],
-            [apt.x + al, apt.y],
-            [apt.x + al + (-ap.tl), apt.y - ap.tt],
-            [apt.x + al + ap.tp, apt.y + (ap.t / 2)],
-            [apt.x + al + (-ap.tl), apt.y + ap.t + ap.tt],
-            [apt.x + al, apt.y + ap.t],
-            [apt.x, apt.y + ap.t],
+    disable() {
+        this.enabled = false
+        this.wrapper.removeEventListener('mousedown', this._downListener)
+        this.wrapper.removeEventListener('mouseup', this._upListener)
+        this.wrapper.removeEventListener('mousemove', this._onMove)
+    }
+
+    draw() {
+        this.shape = this.svg.polygon().fill(conf.color)
+        this.wrapper.addEventListener('mousemove', this._onMove)
+    }
+
+    _doDraw() {
+        const x1 = this.x1
+        const y1 = this.y1
+        const x2 = this.x2
+        const y2 = this.y2
+        const a = (Math.atan2(x2 - x1, -(y2 - y1)) * (180 / Math.PI)) - 90
+        const al = Math.hypot(x2 - x1, y2 - y1)
+
+        this.shape.plot([
+            [x1, y1],
+            [x1 + al, y1],
+            [x1 + al + (-arrowConf.tl), y1 - arrowConf.tt],
+            [x1 + al + arrowConf.tp, y1 + (arrowConf.t / 2)],
+            [x1 + al + (-arrowConf.tl), y1 + arrowConf.t + arrowConf.tt],
+            [x1 + al, y1 + arrowConf.t],
+            [x1, y1 + arrowConf.t],
         ])
-        arrow.rotate(a, apt.x, apt.y + (ap.t / 2))
+        console.log('a', a)
+        this.shape.rotate(a, x1, y1 + (arrowConf.t / 2))
     }
 
-    let n = 1
+    _downListener(event) {
+        this.x1 = event.clientX
+        this.y1 = event.clientY
+        this.draw()
+    }
 
-    const wrapper = document.createElement('div')
-    wrapper.id = `_anota${n}`
-    wrapper.setAttribute('style', 'z-index: 100000; ' +
-        'position: absolute; ' +
-        'top: 0; ' +
-        'left: 0; ' +
-        'width: 100%; ' +
-        'height: 100%; ')
-    n += 1
-    document.body.appendChild(wrapper)
+    _upListener(event) {
+        this.x1 = event.clientX
+        this.y1 = event.clientY
+        this.draw()
+    }
 
-    const draw = SVG(wrapper.id)
-    const arrow = draw.polygon().fill('#9841B5')
+    _moveListener(event) {
+        this.x2 = event.clientX
+        this.y2 = event.clientY
+        this._doDraw()
+    }
+}
 
-    wrapper.addEventListener('mousemove', (event) => {
-        drawArrow(arrow, event.clientX, event.clientY)
-    })
-})
+
+// -- ANOTA CLASS
+
+const anotaConf = {
+    n: 1,
+}
+
+class Anota {
+    constructor(id = `_anota${anotaConf.n}`) {
+        console.log('Anota')
+
+        const wrapper = document.createElement('div')
+        wrapper.id = id
+        wrapper.setAttribute('style', 'z-index: 100000; ' +
+            'position: absolute; ' +
+            'top: 0; ' +
+            'left: 0; ' +
+            'width: 100%; ' +
+            'height: 100%; ')
+        // TODO: Consider checking whether document.body is not undefined and wait for DOM loaded
+        document.body.appendChild(wrapper)
+        anotaConf.n += 1
+
+        this.wrapper = wrapper
+        this.svg = SVG(id)
+        this.arrows = []
+    }
+
+    drawArrow() {
+        const arrow = new Arrow(this.svg)
+        arrow.draw()
+        this.arrows.push(arrow)
+    }
+}
 
 // TODO: Try to achieve this directly on the UMD wrapper, right now it outputs on window.main.Anota
 window.Anota = Anota
