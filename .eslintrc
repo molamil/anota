@@ -15,7 +15,8 @@
         "object-shorthand": ["warn", "always"],
         "func-names": ["error", "as-needed"],
         "no-param-reassign": [1, { "props": false }],
-        "import/no-extraneous-dependencies": ["error", { "devDependencies": true }]
+        "import/no-extraneous-dependencies": ["error", { "devDependencies": true }],
+        "import/prefer-default-export": "off"
     },
     "defaultSeverity": "warning"
 }

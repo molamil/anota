@@ -13,6 +13,7 @@
   "dependencies": {},
   "devDependencies": {
     "babel-cli": "^6.24.1",
+    "babel-plugin-transform-es2015-modules-umd": "^6.24.1",
     "babel-preset-env": "^1.4.0",
     "browser-sync": "^2.18.8",
     "concurrently": "^3.4.0",

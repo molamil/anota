@@ -1,3 +1,7 @@
+const Anota = () => {
+    console.log('Anota', Anota, window.Anota)
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     // Arrow structure
     const ap = {
@@ -16,7 +20,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function drawArrow(arrow, x, y) {
         const a = (Math.atan2(x - apt.x, -(y - apt.y)) * (180 / Math.PI)) - 90
         const al = Math.hypot(x - apt.x, y - apt.y)
-        console.log(x, y, a, al)
+        // console.log(x, y, a, al)
         arrow.plot([
             [apt.x, apt.y],
             [apt.x + al, apt.y],
@@ -50,4 +54,7 @@ document.addEventListener('DOMContentLoaded', () => {
     })
 })
 
-// export default { anota }
+// TODO: Try to achieve this directly on the UMD wrapper, right now it outputs on window.main.Anota
+window.Anota = Anota
+
+export { Anota }
