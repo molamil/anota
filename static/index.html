@@ -4,12 +4,35 @@
     <meta charset="UTF-8">
     <title>Anota tester</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/svg.js/2.6.1/svg.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.6.5/dat.gui.min.js"></script>
     <script src="anota.js"></script>
 </head>
 <body style="margin: 0; background-color: #CCC;">
+    <div id="gui" style="position: fixed; z-index: 2000000; right: 0;"></div>
     <script>
-        let anota = new Anota()
+        const anota = new Anota()
         anota.selectText()
+
+        function GuiControl() {
+            this.color = Anota.color
+            this.tool = 'Text'
+        }
+        const control = new GuiControl()
+        const gui = new dat.GUI({ autoPlace: false })
+        gui.addColor(control, 'color').onFinishChange((value) => {
+            anota.color = value
+        })
+        gui.add(control, 'tool', ['Arrow', 'Text']).onFinishChange((value) => {
+            switch (value) {
+                case ('Arrow'):
+                    anota.selectArrow()
+                    break
+                case ('Text'):
+                    anota.selectText()
+                    break
+            }
+        })
+        document.getElementById('gui').appendChild(gui.domElement)
     </script>
 </body>
 </html>

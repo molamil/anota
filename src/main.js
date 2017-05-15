@@ -15,14 +15,22 @@ class Text {
     }
 
     start() {
-        this.textShape = this.svg.text('Lorem ipsum dolor sit amet.\nCras sodales auctor.')
+        this.textShape = this.svg.text('').fill(this.color).cx(this.x).cy(this.y)
+        this.textShape.font({
+            family: 'Helvetica',
+            weight: 'bold',
+            size: 24,
+        })
 
         this.textInput = document.createElement('input')
         this.textInput.setAttribute('autofocus', 'autofocus')
+        this.textInput.setAttribute('style', 'position: absolute; ' +
+            'top: 20px; ' +
+            'left: 20px; ' +
+            'width: 10px; ')
         document.body.appendChild(this.textInput)
 
         this.textInput.addEventListener('input', (event) => {
-            console.log('input', event)
             this.textShape.text(event.target.value)
         })
     }
@@ -101,7 +109,7 @@ Arrow.tp = 50 // Head length
 // -- ANOTA CLASS
 
 class Anota {
-    constructor(id = `_anota${Anota.n}`) {
+    constructor(id = `_anota${Anota.n}`, color = Anota.color) {
         const that = this
 
         const wrapper = document.createElement('div')
@@ -118,6 +126,7 @@ class Anota {
         Anota.n += 1
 
         // Instance properties
+        this.color = color
         this.wrapper = wrapper
         this.svg = SVG(id)
         this.currentTool = null
@@ -147,7 +156,7 @@ class Anota {
     }
 
     startArrow(x = 0, y = 0) {
-        const arrow = new Arrow(this.svg, x, y, Anota.color)
+        const arrow = new Arrow(this.svg, x, y, this.color)
         arrow.start()
         this.arrows.push(arrow)
     }
@@ -162,7 +171,7 @@ class Anota {
     }
 
     startText(x = 0, y = 0) {
-        const text = new Text(this.svg, x, y, Anota.color)
+        const text = new Text(this.svg, x, y, this.color)
         text.start()
         this.texts.push(text)
     }
