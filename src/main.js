@@ -1,9 +1,7 @@
 // -- TEXT CLASS
 
 class Text {
-    constructor(svg, x = 0, y = 0, color) {
-        console.log('Text', this)
-
+    constructor(svg, x = 0, y = 0, color, font = 'Helvetica, sans-serif') {
         // Instance properties
         this.svg = svg
         this.wrapper = svg.parent()
@@ -11,32 +9,68 @@ class Text {
         this.y = y
         this.color = color
         this.textInput = null
-        this.textShape = null
+        this.textShadowEl = null
+        this.padding = 5 // TODO: Make padding configurable
+        this.fontFamily = font // Might get replaced in _init if WebFont is present
+
+        this._init()
     }
 
     start() {
-        this.textShape = this.svg.text('').fill(this.color).cx(this.x).cy(this.y)
-        this.textShape.font({
-            family: 'Helvetica',
-            weight: 'bold',
-            size: 24,
-        })
+        const that = this
 
         this.textInput = document.createElement('input')
         this.textInput.setAttribute('autofocus', 'autofocus')
-        this.textInput.setAttribute('style', 'position: absolute; ' +
-            'top: 20px; ' +
-            'left: 20px; ' +
-            'width: 10px; ')
-        document.body.appendChild(this.textInput)
+        this.textInput.setAttribute('style', 'position: absolute;' +
+            `top: ${this.y}px;` +
+            `left: ${this.x}px;` +
+            'width: 0;' +
+            `padding: ${this.padding}px;` +
+            `border: 2px solid ${this.color};` +
+            `color: ${this.color};` +
+            'background: rgba(255, 255, 255, 0.9);' +
+            'text-align: center;' +
+            `font-family: ${this.fontFamily};` +
+            'font-weight: bold; ' +
+            'font-size: 24px;')
+        this.wrapper.appendChild(this.textInput)
 
-        this.textInput.addEventListener('input', (event) => {
-            this.textShape.text(event.target.value)
+        this.textShadowEl = document.createElement('span')
+        this.textShadowEl.setAttribute('style', 'position: absolute;' +
+            'top: -100px;' + // Place out of the screen
+            'left: 0;' +
+            'border: 1px solid red;' +
+            'white-space: nowrap;' +
+            `font-family: ${this.fontFamily};` +
+            'font-weight: bold;' +
+            'font-size: 24px;')
+        this.wrapper.appendChild(this.textShadowEl)
+
+        this.textInput.addEventListener('input', () => {
+            that.textShadowEl.innerHTML = that.textInput.value.replace(/\s/g, '&nbsp')
+            that.resize()
         })
     }
 
     stop() {
         console.log('Text.stop', this)
+    }
+
+    resize() {
+        const w = this.textShadowEl.clientWidth + (this.padding * 2)
+        this.textInput.style.width = `${w}px`
+    }
+
+    _init() {
+        if (typeof WebFont === 'object') {
+            /* eslint-disable no-undef */
+            WebFont.load({
+                google: {
+                    families: ['PT Sans Narrow:700'],
+                },
+            })
+            this.fontFamily = '"PT Sans Narrow", sans-serif'
+        }
     }
 }
 
@@ -208,7 +242,7 @@ Anota.tools = {
 }
 
 
-// TODO: Try to achieve this directly on the UMD wrapper, right now it outputs on window.main.Anota
+// XXX: Try to achieve this directly on the UMD wrapper, right now it outputs on window.main.Anota
 window.Anota = Anota
 
 export { Anota }
