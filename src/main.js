@@ -6,14 +6,15 @@ class Text {
 
         // Instance properties
         this.svg = svg
-        this.wrapper = svg.parent()
+        this.el = svg.parent()
         this.x = x - Text.padding - Text.borderWidth // Correction so it is visually centered
         this.y = y - Text.borderWidth - (Text.fontSize / 2) // Correction so it is visually centered
         this.color = color
         this.textInput = null
-        this.textShadowEl = null
         this.padding = Text.padding
         this.fontFamily = fontFamily // Might get replaced in _init if WebFont is present
+        this.value = null
+        this._textShadowEl = null
         this._resolve = null
 
         // Binders so "this" to work in listeners
@@ -45,20 +46,20 @@ class Text {
             `font-family: ${this.fontFamily};` +
             'font-weight: bold; ' +
             `font-size: ${Text.fontSize}px;`)
-        this.wrapper.appendChild(this.textInput)
+        this.el.appendChild(this.textInput)
         setTimeout(() => {
             this.textInput.focus()
         }, 10)
 
-        this.textShadowEl = document.createElement('span')
-        this.textShadowEl.setAttribute('style', 'position: absolute;' +
+        this._textShadowEl = document.createElement('span')
+        this._textShadowEl.setAttribute('style', 'position: absolute;' +
             'top: -100px;' + // Place out of the screen
             'left: 0;' +
             'white-space: nowrap;' +
             `font-family: ${this.fontFamily};` +
             'font-weight: bold;' +
             `font-size: ${Text.fontSize}px;`)
-        this.wrapper.appendChild(this.textShadowEl)
+        this.el.appendChild(this._textShadowEl)
 
         this.textInput.addEventListener('input', this._onInput)
         this.textInput.addEventListener('keydown', this._onKeydown)
@@ -73,14 +74,14 @@ class Text {
         this.textInput.removeEventListener('input', this._onInput)
         this.textInput.removeEventListener('keydown', this._onKeydown)
         this.textInput.removeEventListener('blur', this._onBlur)
-        this._resolve(this.textInput.value)
+        this._resolve(this.value)
         setTimeout(() => {
             this.textInput.blur()
         }, 10)
     }
 
     resize() {
-        const w = this.textShadowEl.clientWidth + (this.padding * 2)
+        const w = this._textShadowEl.clientWidth + (this.padding * 2)
         const x = this.x - (w / 2)
         this.textInput.style.left = `${x}px`
         this.textInput.style.width = `${w}px`
@@ -99,7 +100,8 @@ class Text {
     }
 
     _inputListener() {
-        this.textShadowEl.innerHTML = this.textInput.value.replace(/\s/g, '&nbsp')
+        this.value = this.textInput.value
+        this._textShadowEl.innerHTML = this.value.replace(/\s/g, '&nbsp')
         this.resize()
     }
 
@@ -128,7 +130,7 @@ class Arrow {
 
         // Instance properties
         this.svg = svg
-        this.wrapper = svg.parent()
+        this.el = svg.parent()
         this.x1 = x
         this.y1 = y
         this.x2 = 0
@@ -150,7 +152,7 @@ class Arrow {
 
     start() {
         this.shape = this.svg.polygon().fill(this.color)
-        this.wrapper.addEventListener('mousemove', this._onMove)
+        this.el.addEventListener('mousemove', this._onMove)
 
         return new Promise((resolve) => {
             this._resolve = resolve
@@ -158,12 +160,12 @@ class Arrow {
     }
 
     stop() {
-        this.wrapper.removeEventListener('mousemove', this._onMove)
+        this.el.removeEventListener('mousemove', this._onMove)
         this._resolve()
     }
 
     _init() {
-        this.wrapper.addEventListener('mouseup', this._onUp)
+        this.el.addEventListener('mouseup', this._onUp)
     }
 
     _doDraw() {
@@ -225,7 +227,7 @@ class Anota {
 
         // Instance properties
         this.color = color
-        this.wrapper = wrapper
+        this.el = wrapper
         this.svg = SVG(id)
         this.currentSelected = null
         this.currentWorking = null
@@ -241,8 +243,8 @@ class Anota {
     }
 
     destroy() {
-        this.wrapper.removeEventListener('mousedown', this._onDown)
-        this.wrapper.removeEventListener('mouseup', this._onUp)
+        this.el.removeEventListener('mousedown', this._onDown)
+        this.el.removeEventListener('mouseup', this._onUp)
         // TODO: Destroy shapes, etc
     }
 
@@ -255,10 +257,15 @@ class Anota {
         const arrow = new Arrow(this.svg, x, y, this.color)
         this.currentWorking = arrow
         arrow.start().then(() => {
+            let eventType
             this.currentWorking = null
             if (addText) {
                 this.startText(x, y)
+                eventType = 'anotapartial'
+            } else {
+                eventType = 'anotacreate'
             }
+            this.el.dispatchEvent(new CustomEvent(eventType, { detail: arrow }))
         })
         this.arrows.push(arrow)
     }
@@ -277,6 +284,7 @@ class Anota {
         this.currentWorking = text
         text.start().then(() => {
             this.currentWorking = null
+            this.el.dispatchEvent(new CustomEvent('anotacreate', { detail: text }))
         })
         this.texts.push(text)
     }
@@ -286,7 +294,7 @@ class Anota {
     }
 
     _init() {
-        this.wrapper.addEventListener('mousedown', this._onDown)
+        this.el.addEventListener('mousedown', this._onDown)
     }
 
     _downListener(event) {
@@ -311,7 +319,7 @@ Anota.tools = {
 }
 
 
-// XXX: Try to achieve this directly on the UMD wrapper, right now it outputs on window.main.Anota
+// XXX: Try to achieve this directly on the UMD el, right now it outputs on window.main.Anota
 window.Anota = Anota
 
 export { Anota }

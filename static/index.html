@@ -14,6 +14,13 @@
         const anota = new Anota()
         anota.selectArrow(true)
 
+        anota.el.addEventListener('anotacreate', (event) => {
+            console.log('anotacreate', event.detail)
+        })
+        anota.el.addEventListener('anotapartial', (event) => {
+            console.log('anotapartial', event.detail)
+        })
+
         function GuiControl() {
             this.color = Anota.color
             this.tool = 'Arrow Text'
