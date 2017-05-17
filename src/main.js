@@ -29,7 +29,7 @@ class Text {
 
     start() {
         this.textInput = document.createElement('input')
-        this.textInput.setAttribute('autofocus', 'autofocus')
+        this.textInput.setAttribute('id', 'test1')
         this.textInput.setAttribute('style', 'position: absolute;' +
             `top: ${this.y}px;` +
             `left: ${this.x}px;` +
@@ -43,6 +43,9 @@ class Text {
             'font-weight: bold; ' +
             'font-size: 24px;')
         this.wrapper.appendChild(this.textInput)
+        setTimeout(() => {
+            this.textInput.focus()
+        }, 100)
 
         this.textShadowEl = document.createElement('span')
         this.textShadowEl.setAttribute('style', 'position: absolute;' +
@@ -64,14 +67,18 @@ class Text {
     }
 
     stop() {
-        console.log('Text.stop', this)
         this.textInput.removeEventListener('input', this._onInput)
         this.textInput.removeEventListener('keydown', this._onKeydown)
         this._resolve(this.textInput.value)
+        setTimeout(() => {
+            this.textInput.blur()
+        }, 100)
     }
 
     resize() {
         const w = this.textShadowEl.clientWidth + (this.padding * 2)
+        const x = this.x - (w / 2)
+        this.textInput.style.left = `${x}px`
         this.textInput.style.width = `${w}px`
     }
 
@@ -251,10 +258,14 @@ class Anota {
     }
 
     _downListener(event) {
-        if (this.currentSelected === Anota.tools.ARROW) {
-            this.startArrow(event.clientX, event.clientY)
-        } else if (this.currentSelected === Anota.tools.TEXT) {
-            this.startText(event.clientX, event.clientY)
+        console.log('DOWN?')
+        if (this.currentWorking === null) {
+            console.log('DOWN', this.currentSelected)
+            if (this.currentSelected === Anota.tools.ARROW) {
+                this.startArrow(event.clientX, event.clientY)
+            } else if (this.currentSelected === Anota.tools.TEXT) {
+                this.startText(event.clientX, event.clientY)
+            }
         }
     }
 
