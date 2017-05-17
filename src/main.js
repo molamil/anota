@@ -1,7 +1,9 @@
 // -- TEXT CLASS
 
 class Text {
-    constructor(svg, x = 0, y = 0, color, font = 'Helvetica, sans-serif') {
+    constructor(svg, x = 0, y = 0, color, fontFamily = 'Helvetica, sans-serif') {
+        const that = this
+
         // Instance properties
         this.svg = svg
         this.wrapper = svg.parent()
@@ -11,14 +13,20 @@ class Text {
         this.textInput = null
         this.textShadowEl = null
         this.padding = 5 // TODO: Make padding configurable
-        this.fontFamily = font // Might get replaced in _init if WebFont is present
+        this.fontFamily = fontFamily // Might get replaced in _init if WebFont is present
+
+        // Binders so "this" to work in listeners
+        this._onInput = (event) => {
+            that._inputListener.call(that, event)
+        }
+        this._onKeydown = (event) => {
+            that._keydownListener.call(that, event)
+        }
 
         this._init()
     }
 
     start() {
-        const that = this
-
         this.textInput = document.createElement('input')
         this.textInput.setAttribute('autofocus', 'autofocus')
         this.textInput.setAttribute('style', 'position: absolute;' +
@@ -46,14 +54,14 @@ class Text {
             'font-size: 24px;')
         this.wrapper.appendChild(this.textShadowEl)
 
-        this.textInput.addEventListener('input', () => {
-            that.textShadowEl.innerHTML = that.textInput.value.replace(/\s/g, '&nbsp')
-            that.resize()
-        })
+        this.textInput.addEventListener('input', this._onInput)
+        this.textInput.addEventListener('keydown', this._onKeydown)
     }
 
     stop() {
         console.log('Text.stop', this)
+        this.textInput.removeEventListener('input', this._onInput)
+        this.textInput.removeEventListener('keydown', this._onKeydown)
     }
 
     resize() {
@@ -62,14 +70,25 @@ class Text {
     }
 
     _init() {
+        // Use Google's PT Sans Narrow if WebFont is present
         if (typeof WebFont === 'object') {
-            /* eslint-disable no-undef */
             WebFont.load({
                 google: {
                     families: ['PT Sans Narrow:700'],
                 },
             })
             this.fontFamily = '"PT Sans Narrow", sans-serif'
+        }
+    }
+
+    _inputListener() {
+        this.textShadowEl.innerHTML = this.textInput.value.replace(/\s/g, '&nbsp')
+        this.resize()
+    }
+
+    _keydownListener(event) {
+        if (event.keyCode === 13 || event.keyCode === 288) {
+            this.stop()
         }
     }
 }

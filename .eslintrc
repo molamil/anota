@@ -5,7 +5,8 @@
         "node": true
     },
     "globals": {
-        "SVG": true
+        "SVG": true,
+        "WebFont": true
     },
     "extends": "airbnb-base",
     "rules": {
