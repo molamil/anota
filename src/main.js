@@ -14,6 +14,7 @@ class Text {
         this.textShadowEl = null
         this.padding = 5 // TODO: Make padding configurable
         this.fontFamily = fontFamily // Might get replaced in _init if WebFont is present
+        this._resolve = null
 
         // Binders so "this" to work in listeners
         this._onInput = (event) => {
@@ -56,12 +57,17 @@ class Text {
 
         this.textInput.addEventListener('input', this._onInput)
         this.textInput.addEventListener('keydown', this._onKeydown)
+
+        return new Promise((resolve) => {
+            this._resolve = resolve
+        })
     }
 
     stop() {
         console.log('Text.stop', this)
         this.textInput.removeEventListener('input', this._onInput)
         this.textInput.removeEventListener('keydown', this._onKeydown)
+        this._resolve(this.textInput.value)
     }
 
     resize() {
@@ -182,7 +188,8 @@ class Anota {
         this.color = color
         this.wrapper = wrapper
         this.svg = SVG(id)
-        this.currentTool = null
+        this.currentSelected = null
+        this.currentWorking = null
         this.arrows = []
         this.texts = []
 
@@ -205,7 +212,7 @@ class Anota {
 
     selectArrow() {
         // TODO: deselect the previous tool
-        this.currentTool = Anota.tools.ARROW
+        this.currentSelected = Anota.tools.ARROW
     }
 
     startArrow(x = 0, y = 0) {
@@ -220,12 +227,17 @@ class Anota {
 
     selectText() {
         // TODO: deselect the previous tool
-        this.currentTool = Anota.tools.TEXT
+        this.currentSelected = Anota.tools.TEXT
     }
 
     startText(x = 0, y = 0) {
         const text = new Text(this.svg, x, y, this.color)
-        text.start()
+        this.currentWorking = text
+        console.log('text start')
+        text.start().then((value) => {
+            console.log('text stop', value)
+            this.currentWorking = null
+        })
         this.texts.push(text)
     }
 
@@ -239,15 +251,15 @@ class Anota {
     }
 
     _downListener(event) {
-        if (this.currentTool === Anota.tools.ARROW) {
+        if (this.currentSelected === Anota.tools.ARROW) {
             this.startArrow(event.clientX, event.clientY)
-        } else if (this.currentTool === Anota.tools.TEXT) {
+        } else if (this.currentSelected === Anota.tools.TEXT) {
             this.startText(event.clientX, event.clientY)
         }
     }
 
     _upListener() {
-        if (this.currentTool === Anota.tools.ARROW) {
+        if (this.currentSelected === Anota.tools.ARROW) {
             this.stopArrow()
         }
     }
