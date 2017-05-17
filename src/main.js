@@ -7,12 +7,12 @@ class Text {
         // Instance properties
         this.svg = svg
         this.wrapper = svg.parent()
-        this.x = x
-        this.y = y
+        this.x = x - Text.padding - Text.borderWidth // Correction so it is visually centered
+        this.y = y - Text.borderWidth - (Text.fontSize / 2) // Correction so it is visually centered
         this.color = color
         this.textInput = null
         this.textShadowEl = null
-        this.padding = 5 // TODO: Make padding configurable
+        this.padding = Text.padding
         this.fontFamily = fontFamily // Might get replaced in _init if WebFont is present
         this._resolve = null
 
@@ -23,6 +23,9 @@ class Text {
         this._onKeydown = (event) => {
             that._keydownListener.call(that, event)
         }
+        this._onBlur = (event) => {
+            that._blurListener.call(that, event)
+        }
 
         this._init()
     }
@@ -32,34 +35,34 @@ class Text {
         this.textInput.setAttribute('id', 'test1')
         this.textInput.setAttribute('style', 'position: absolute;' +
             `top: ${this.y}px;` +
-            `left: ${this.x}px;` +
-            'width: 0;' +
+            `left: ${this.x - (Text.fontSize / 2)}px;` +
+            `width: ${Text.fontSize}px;` +
             `padding: ${this.padding}px;` +
-            `border: 2px solid ${this.color};` +
+            `border: ${Text.borderWidth}px solid ${this.color};` +
             `color: ${this.color};` +
-            'background: rgba(255, 255, 255, 0.9);' +
+            'background: #FFF;' +
             'text-align: center;' +
             `font-family: ${this.fontFamily};` +
             'font-weight: bold; ' +
-            'font-size: 24px;')
+            `font-size: ${Text.fontSize}px;`)
         this.wrapper.appendChild(this.textInput)
         setTimeout(() => {
             this.textInput.focus()
-        }, 100)
+        }, 10)
 
         this.textShadowEl = document.createElement('span')
         this.textShadowEl.setAttribute('style', 'position: absolute;' +
             'top: -100px;' + // Place out of the screen
             'left: 0;' +
-            'border: 1px solid red;' +
             'white-space: nowrap;' +
             `font-family: ${this.fontFamily};` +
             'font-weight: bold;' +
-            'font-size: 24px;')
+            `font-size: ${Text.fontSize}px;`)
         this.wrapper.appendChild(this.textShadowEl)
 
         this.textInput.addEventListener('input', this._onInput)
         this.textInput.addEventListener('keydown', this._onKeydown)
+        this.textInput.addEventListener('blur', this._onBlur)
 
         return new Promise((resolve) => {
             this._resolve = resolve
@@ -69,10 +72,11 @@ class Text {
     stop() {
         this.textInput.removeEventListener('input', this._onInput)
         this.textInput.removeEventListener('keydown', this._onKeydown)
+        this.textInput.removeEventListener('blur', this._onBlur)
         this._resolve(this.textInput.value)
         setTimeout(() => {
             this.textInput.blur()
-        }, 100)
+        }, 10)
     }
 
     resize() {
@@ -104,7 +108,16 @@ class Text {
             this.stop()
         }
     }
+
+    _blurListener() {
+        this.stop()
+    }
 }
+
+// Static properties
+Text.padding = 5
+Text.borderWidth = 2
+Text.fontSize = 24
 
 
 // -- ARROW CLASS
@@ -122,20 +135,35 @@ class Arrow {
         this.y2 = 0
         this.color = color
         this.shape = null
+        this._resolve = null
 
         // Binders so "this" to work in listeners
         this._onMove = (event) => {
             that._moveListener.call(that, event)
         }
+        this._onUp = (event) => {
+            that._upListener.call(that, event)
+        }
+
+        this._init()
     }
 
     start() {
         this.shape = this.svg.polygon().fill(this.color)
         this.wrapper.addEventListener('mousemove', this._onMove)
+
+        return new Promise((resolve) => {
+            this._resolve = resolve
+        })
     }
 
     stop() {
         this.wrapper.removeEventListener('mousemove', this._onMove)
+        this._resolve()
+    }
+
+    _init() {
+        this.wrapper.addEventListener('mouseup', this._onUp)
     }
 
     _doDraw() {
@@ -162,6 +190,10 @@ class Arrow {
         this.x2 = event.clientX
         this.y2 = event.clientY
         this._doDraw()
+    }
+
+    _upListener() {
+        this.stop()
     }
 }
 
@@ -204,9 +236,6 @@ class Anota {
         this._onDown = (event) => {
             that._downListener.call(that, event)
         }
-        this._onUp = (event) => {
-            that._upListener.call(that, event)
-        }
 
         this._init()
     }
@@ -217,14 +246,20 @@ class Anota {
         // TODO: Destroy shapes, etc
     }
 
-    selectArrow() {
+    selectArrow(addText) {
         // TODO: deselect the previous tool
-        this.currentSelected = Anota.tools.ARROW
+        this.currentSelected = addText ? Anota.tools.ARROW_TEXT : Anota.tools.ARROW
     }
 
-    startArrow(x = 0, y = 0) {
+    startArrow(x = 0, y = 0, addText) {
         const arrow = new Arrow(this.svg, x, y, this.color)
-        arrow.start()
+        this.currentWorking = arrow
+        arrow.start().then(() => {
+            this.currentWorking = null
+            if (addText) {
+                this.startText(x, y)
+            }
+        })
         this.arrows.push(arrow)
     }
 
@@ -240,9 +275,7 @@ class Anota {
     startText(x = 0, y = 0) {
         const text = new Text(this.svg, x, y, this.color)
         this.currentWorking = text
-        console.log('text start')
-        text.start().then((value) => {
-            console.log('text stop', value)
+        text.start().then(() => {
             this.currentWorking = null
         })
         this.texts.push(text)
@@ -254,24 +287,17 @@ class Anota {
 
     _init() {
         this.wrapper.addEventListener('mousedown', this._onDown)
-        this.wrapper.addEventListener('mouseup', this._onUp)
     }
 
     _downListener(event) {
-        console.log('DOWN?')
         if (this.currentWorking === null) {
-            console.log('DOWN', this.currentSelected)
             if (this.currentSelected === Anota.tools.ARROW) {
                 this.startArrow(event.clientX, event.clientY)
+            } else if (this.currentSelected === Anota.tools.ARROW_TEXT) {
+                this.startArrow(event.clientX, event.clientY, true)
             } else if (this.currentSelected === Anota.tools.TEXT) {
                 this.startText(event.clientX, event.clientY)
             }
-        }
-    }
-
-    _upListener() {
-        if (this.currentSelected === Anota.tools.ARROW) {
-            this.stopArrow()
         }
     }
 }
@@ -281,6 +307,7 @@ Anota.color = '#9841B5'
 Anota.tools = {
     ARROW: 'arrow',
     TEXT: 'text',
+    ARROW_TEXT: 'arrowtext',
 }
 
 

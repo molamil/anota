@@ -12,19 +12,22 @@
     <div id="gui" style="position: fixed; z-index: 2000000; right: 0;"></div>
     <script>
         const anota = new Anota()
-        anota.selectText()
+        anota.selectArrow(true)
 
         function GuiControl() {
             this.color = Anota.color
-            this.tool = 'Text'
+            this.tool = 'Arrow Text'
         }
         const control = new GuiControl()
         const gui = new dat.GUI({ autoPlace: false })
         gui.addColor(control, 'color').onFinishChange((value) => {
             anota.color = value
         })
-        gui.add(control, 'tool', ['Arrow', 'Text']).onFinishChange((value) => {
+        gui.add(control, 'tool', ['Arrow Text', 'Arrow', 'Text']).onFinishChange((value) => {
             switch (value) {
+                case ('Arrow Text'):
+                    anota.selectArrow(true)
+                    break
                 case ('Arrow'):
                     anota.selectArrow()
                     break
