@@ -12,10 +12,13 @@
     <div id="gui" style="position: fixed; z-index: 2000000; right: 0;"></div>
     <script>
         const anota = new Anota()
-        anota.selectArrow()
+        anota.selectArrow(true)
 
         anota.el.addEventListener('anotacreate', (event) => {
             console.log('anotacreate', event.detail)
+            setTimeout(() => {
+                event.detail.remove()
+            }, 1000)
         })
         anota.el.addEventListener('anotapartial', (event) => {
             console.log('anotapartial', event.detail)
@@ -23,7 +26,7 @@
 
         function GuiControl() {
             this.color = Anota.color
-            this.tool = 'Arrow'
+            this.tool = 'Arrow Text'
         }
         const control = new GuiControl()
         const gui = new dat.GUI({ autoPlace: false })

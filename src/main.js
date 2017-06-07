@@ -44,7 +44,8 @@ class Text {
             'text-align: center;' +
             `font-family: ${this.fontFamily};` +
             'font-weight: bold; ' +
-            `font-size: ${Text.fontSize}px;`)
+            `font-size: ${Text.fontSize}px;` +
+            `transition: opacity ${Text.outTime}s;`)
         this.el.appendChild(this.textInput)
         setTimeout(() => {
             this.textInput.focus()
@@ -88,7 +89,14 @@ class Text {
     }
 
     remove() {
-        this.destroy()
+        if (Text.animateOut) {
+            this.textInput.style.opacity = 0
+            setTimeout(() => {
+                this.destroy()
+            }, Text.outTime * 1000)
+        } else {
+            this.destroy()
+        }
     }
 
     destroy() {
@@ -137,6 +145,7 @@ Text.padding = 5
 Text.borderWidth = 2
 Text.fontSize = 24
 Text.animateOut = true
+Text.outTime = 1
 
 
 // -- ARROW CLASS
@@ -154,6 +163,7 @@ class Arrow {
         this.y2 = -1
         this.color = color
         this.shape = null
+        this.text = null
         this._resolve = null
 
         // Binders so "this" works in listeners
@@ -185,12 +195,27 @@ class Arrow {
     }
 
     remove() {
-        this.destroy()
+        if (this.text) {
+            this.text.remove()
+            this.text = null
+        }
+        if (Arrow.animateOut) {
+            this.shape.animate(Arrow.outTime * 1000).attr({ 'fill-opacity': 0.1 })
+            setTimeout(() => {
+                this.destroy()
+            }, Arrow.outTime * 1000)
+        } else {
+            this.destroy()
+        }
     }
 
     destroy() {
         this._removeListeners()
         this.shape.remove()
+        if (this.text) {
+            this.text.destroy()
+            this.text = null
+        }
     }
 
     _init() {
@@ -237,6 +262,8 @@ Arrow.t = 15  // Shaft thickness
 Arrow.tl = 8  // Head back tip in x
 Arrow.tt = 20 // Head back tip in y
 Arrow.tp = 50 // Head length
+Arrow.animateOut = true
+Arrow.outTime = 0.25
 
 
 // -- ANOTA CLASS
@@ -289,19 +316,24 @@ class Anota {
 
     startArrow(x = 0, y = 0, addText) {
         const arrow = new Arrow(this.svg, x, y, this.color)
+        const dispatch = (eventType) => {
+            this.el.dispatchEvent(new CustomEvent(eventType, { detail: arrow }))
+        }
         this.currentWorking = arrow
         arrow.start().then(() => {
-            let eventType
             this.currentWorking = null
             if (addText) {
-                this.startText(x, y)
-                eventType = 'anotapartial'
+                arrow.text = this.startText(x, y, () => {
+                    dispatch('anotacreate')
+                })
+                dispatch('anotapartial')
             } else {
-                eventType = 'anotacreate'
+                dispatch('anotacreate')
             }
-            this.el.dispatchEvent(new CustomEvent(eventType, { detail: arrow }))
         })
+        // TODO: remove from array when the shape is destroyed
         this.arrows.push(arrow)
+        return arrow
     }
 
     stopArrow() {
@@ -313,14 +345,21 @@ class Anota {
         this.currentSelected = Anota.tools.TEXT
     }
 
-    startText(x = 0, y = 0) {
+    startText(x = 0, y = 0, created = null) {
         const text = new Text(this.svg, x, y, this.color)
         this.currentWorking = text
+        if (typeof created !== 'function') {
+            created = () => {
+                this.el.dispatchEvent(new CustomEvent('anotacreate', { detail: text }))
+            }
+        }
         text.start().then(() => {
             this.currentWorking = null
-            this.el.dispatchEvent(new CustomEvent('anotacreate', { detail: text }))
+            created()
         })
+        // TODO: remove from array when the shape is destroyed
         this.texts.push(text)
+        return text
     }
 
     stopText() {
