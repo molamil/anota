@@ -215,6 +215,7 @@ class Anota {
         const wrapper = document.createElement('div')
         wrapper.id = id
         wrapper.setAttribute('style', 'z-index: 100000; ' +
+            'background: rgba(255, 0, 0, 0.2); ' +
             'position: absolute; ' +
             'overflow: hidden; ' +
             'top: 0; ' +
@@ -322,4 +323,4 @@ Anota.tools = {
 // XXX: Try to achieve this directly on the UMD el, right now it outputs on window.main.Anota
 window.Anota = Anota
 
-export { Anota }
+export default Anota
