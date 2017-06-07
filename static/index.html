@@ -23,6 +23,9 @@
         anota.el.addEventListener('anotapartial', (event) => {
             console.log('anotapartial', event.detail)
         })
+        anota.el.addEventListener('anotastart', (event) => {
+            console.log('anotastart', event.detail)
+        })
 
         function GuiControl() {
             this.color = Anota.color

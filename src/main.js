@@ -316,19 +316,15 @@ class Anota {
 
     startArrow(x = 0, y = 0, addText) {
         const arrow = new Arrow(this.svg, x, y, this.color)
-        const dispatch = (eventType) => {
-            this.el.dispatchEvent(new CustomEvent(eventType, { detail: arrow }))
-        }
         this.currentWorking = arrow
+        this._dispatch('anotastart', arrow)
         arrow.start().then(() => {
             this.currentWorking = null
             if (addText) {
-                arrow.text = this.startText(x, y, () => {
-                    dispatch('anotacreate')
-                })
-                dispatch('anotapartial')
+                arrow.text = this.startText(x, y, arrow)
+                this._dispatch('anotapartial', arrow)
             } else {
-                dispatch('anotacreate')
+                this._dispatch('anotacreate', arrow)
             }
         })
         // TODO: remove from array when the shape is destroyed
@@ -345,17 +341,15 @@ class Anota {
         this.currentSelected = Anota.tools.TEXT
     }
 
-    startText(x = 0, y = 0, created = null) {
+    startText(x = 0, y = 0, master = null) {
         const text = new Text(this.svg, x, y, this.color)
         this.currentWorking = text
-        if (typeof created !== 'function') {
-            created = () => {
-                this.el.dispatchEvent(new CustomEvent('anotacreate', { detail: text }))
-            }
+        if (!master) {
+            this._dispatch('anotastart', text)
         }
         text.start().then(() => {
             this.currentWorking = null
-            created()
+            this._dispatch('anotacreate', master || text)
         })
         // TODO: remove from array when the shape is destroyed
         this.texts.push(text)
@@ -368,6 +362,10 @@ class Anota {
 
     _init() {
         this.el.addEventListener('mousedown', this._onDown)
+    }
+
+    _dispatch(eventType, detail) {
+        this.el.dispatchEvent(new CustomEvent(eventType, { detail }))
     }
 
     _downListener(event) {
