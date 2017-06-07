@@ -16,6 +16,7 @@ class Text {
         this.value = null
         this._textShadowEl = null
         this._resolve = null
+        this._reject = null
 
         // Binders so "this" works in listeners
         this._onInput = (event) => {
@@ -65,19 +66,23 @@ class Text {
         this.textInput.addEventListener('keydown', this._onKeydown)
         this.textInput.addEventListener('blur', this._onBlur)
 
-        return new Promise((resolve) => {
+        // TODO: Implement reject
+        return new Promise((resolve, reject) => {
             this._resolve = resolve
+            this._reject = reject
         })
     }
 
     stop() {
         this._removeListeners()
-        this._resolve(this.value)
         setTimeout(() => {
             this.textInput.blur()
         }, 10)
-        if (!this.value || this.value.replace(/\s/g, '') === '') {
-            this.remove()
+        if (this.value && this.value.replace(/\s/g, '') !== '') {
+            this._resolve(this.value)
+        } else {
+            this._reject()
+            this.destroy()
         }
     }
 
@@ -165,6 +170,7 @@ class Arrow {
         this.shape = null
         this.text = null
         this._resolve = null
+        this._reject = null
 
         // Binders so "this" works in listeners
         this._onMove = (event) => {
@@ -181,16 +187,19 @@ class Arrow {
         this.shape = this.svg.polygon().fill(this.color)
         this.el.addEventListener('mousemove', this._onMove)
 
-        return new Promise((resolve) => {
+        return new Promise((resolve, reject) => {
             this._resolve = resolve
+            this._reject = reject
         })
     }
 
     stop() {
         this._removeListeners()
-        this._resolve()
-        if (this.x2 === -1 && this.y2 === -1) {
-            this.remove()
+        if (this.x2 !== -1 && this.y2 !== -1) {
+            this._resolve()
+        } else {
+            this._reject()
+            this.destroy()
         }
     }
 
@@ -317,16 +326,22 @@ class Anota {
     startArrow(x = 0, y = 0, addText) {
         const arrow = new Arrow(this.svg, x, y, this.color)
         this.currentWorking = arrow
-        this._dispatch('anotastart', arrow)
+
+        this._dispatch(Anota.events.start, arrow)
+
         arrow.start().then(() => {
             this.currentWorking = null
             if (addText) {
                 arrow.text = this.startText(x, y, arrow)
-                this._dispatch('anotapartial', arrow)
+                this._dispatch(Anota.events.partial, arrow)
             } else {
-                this._dispatch('anotacreate', arrow)
+                this._dispatch(Anota.events.create, arrow)
             }
+        }).catch(() => {
+            this.currentWorking = null
+            this._dispatch(Anota.events.cancel, arrow)
         })
+
         // TODO: remove from array when the shape is destroyed
         this.arrows.push(arrow)
         return arrow
@@ -344,13 +359,24 @@ class Anota {
     startText(x = 0, y = 0, master = null) {
         const text = new Text(this.svg, x, y, this.color)
         this.currentWorking = text
+
         if (!master) {
-            this._dispatch('anotastart', text)
+            this._dispatch(Anota.events.start, text)
         }
+
         text.start().then(() => {
             this.currentWorking = null
-            this._dispatch('anotacreate', master || text)
+            this._dispatch(Anota.events.create, master || text)
+        }).catch(() => {
+            this.currentWorking = null
+            if (master) {
+                master.text = null
+                this._dispatch(Anota.events.create, master)
+            } else {
+                this._dispatch(Anota.events.cancel, text)
+            }
         })
+
         // TODO: remove from array when the shape is destroyed
         this.texts.push(text)
         return text
@@ -387,6 +413,12 @@ Anota.tools = {
     ARROW: 'arrow',
     TEXT: 'text',
     ARROW_TEXT: 'arrowtext',
+}
+Anota.events = {
+    start: 'anotastart',
+    create: 'anotacreate',
+    cancel: 'anotacancel',
+    partial: 'anotapartial',
 }
 
 
