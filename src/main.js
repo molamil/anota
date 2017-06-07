@@ -13,7 +13,7 @@ class Text {
         this.textInput = null
         this.padding = Text.padding
         this.fontFamily = fontFamily // Might get replaced in _init if WebFont is present
-        this.value = null
+        this._value = null
         this._textShadowEl = null
         this._resolve = null
         this._reject = null
@@ -78,8 +78,8 @@ class Text {
         setTimeout(() => {
             this.textInput.blur()
         }, 10)
-        if (this.value && this.value.replace(/\s/g, '') !== '') {
-            this._resolve(this.value)
+        if (this._value && this._value.replace(/\s/g, '') !== '') {
+            this._resolve(this._value)
         } else {
             this._reject()
             this.destroy()
@@ -110,6 +110,10 @@ class Text {
         this.el.removeChild(this._textShadowEl)
     }
 
+    value() {
+        return this._value
+    }
+
     _init() {
         // Use Google's PT Sans Narrow if WebFont is present
         if (typeof WebFont === 'object') {
@@ -123,8 +127,8 @@ class Text {
     }
 
     _inputListener() {
-        this.value = this.textInput.value
-        this._textShadowEl.innerHTML = this.value.replace(/\s/g, '&nbsp')
+        this._value = this.textInput.value
+        this._textShadowEl.innerHTML = this._value.replace(/\s/g, '&nbsp')
         this.resize()
     }
 
@@ -225,6 +229,10 @@ class Arrow {
             this.text.destroy()
             this.text = null
         }
+    }
+
+    value() {
+        return this.text ? this.text.value() : null
     }
 
     _init() {
