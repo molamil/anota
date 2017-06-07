@@ -17,7 +17,7 @@ class Text {
         this._textShadowEl = null
         this._resolve = null
 
-        // Binders so "this" to work in listeners
+        // Binders so "this" works in listeners
         this._onInput = (event) => {
             that._inputListener.call(that, event)
         }
@@ -33,7 +33,6 @@ class Text {
 
     start() {
         this.textInput = document.createElement('input')
-        this.textInput.setAttribute('id', 'test1')
         this.textInput.setAttribute('style', 'position: absolute;' +
             `top: ${this.y}px;` +
             `left: ${this.x - (Text.fontSize / 2)}px;` +
@@ -71,13 +70,14 @@ class Text {
     }
 
     stop() {
-        this.textInput.removeEventListener('input', this._onInput)
-        this.textInput.removeEventListener('keydown', this._onKeydown)
-        this.textInput.removeEventListener('blur', this._onBlur)
+        this._removeListeners()
         this._resolve(this.value)
         setTimeout(() => {
             this.textInput.blur()
         }, 10)
+        if (!this.value || this.value.replace(/\s/g, '') === '') {
+            this.remove()
+        }
     }
 
     resize() {
@@ -85,6 +85,16 @@ class Text {
         const x = this.x - (w / 2)
         this.textInput.style.left = `${x}px`
         this.textInput.style.width = `${w}px`
+    }
+
+    remove() {
+        this.destroy()
+    }
+
+    destroy() {
+        this._removeListeners()
+        this.el.removeChild(this.textInput)
+        this.el.removeChild(this._textShadowEl)
     }
 
     _init() {
@@ -114,12 +124,19 @@ class Text {
     _blurListener() {
         this.stop()
     }
+
+    _removeListeners() {
+        this.textInput.removeEventListener('input', this._onInput)
+        this.textInput.removeEventListener('keydown', this._onKeydown)
+        this.textInput.removeEventListener('blur', this._onBlur)
+    }
 }
 
 // Static properties
 Text.padding = 5
 Text.borderWidth = 2
 Text.fontSize = 24
+Text.animateOut = true
 
 
 // -- ARROW CLASS
@@ -133,13 +150,13 @@ class Arrow {
         this.el = svg.parent()
         this.x1 = x
         this.y1 = y
-        this.x2 = 0
-        this.y2 = 0
+        this.x2 = -1
+        this.y2 = -1
         this.color = color
         this.shape = null
         this._resolve = null
 
-        // Binders so "this" to work in listeners
+        // Binders so "this" works in listeners
         this._onMove = (event) => {
             that._moveListener.call(that, event)
         }
@@ -160,8 +177,20 @@ class Arrow {
     }
 
     stop() {
-        this.el.removeEventListener('mousemove', this._onMove)
+        this._removeListeners()
         this._resolve()
+        if (this.x2 === -1 && this.y2 === -1) {
+            this.remove()
+        }
+    }
+
+    remove() {
+        this.destroy()
+    }
+
+    destroy() {
+        this._removeListeners()
+        this.shape.remove()
     }
 
     _init() {
@@ -196,6 +225,10 @@ class Arrow {
 
     _upListener() {
         this.stop()
+    }
+
+    _removeListeners() {
+        this.el.removeEventListener('mousemove', this._onMove)
     }
 }
 
@@ -235,7 +268,7 @@ class Anota {
         this.arrows = []
         this.texts = []
 
-        // Binders so "this" to work in listeners
+        // Binders so "this" works in listeners
         this._onDown = (event) => {
             that._downListener.call(that, event)
         }
